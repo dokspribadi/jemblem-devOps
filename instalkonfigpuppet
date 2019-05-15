@@ -76,3 +76,4 @@ node 'puppetagent1' {
 
 nb :
 - kalo semisal tidak bisa akses service di agen kemungkinan ada blocking port
+- https://www.howtoforge.com/tutorial/centos-puppet-master-and-agent/
