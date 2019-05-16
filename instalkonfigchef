@@ -1,0 +1,74 @@
+#chefserver
+disable selinux
+yum -y update
+yum group install "Development Tools"
+reboot
+vi /etc/hosts -> sesuaikan nama hostname node lain supaya bisa di resolve
+192.168.20.124  chefserver
+192.168.20.125  chefworksstion
+192.168.20.126  chefclient
+yum -y install wget
+wget https://packages.chef.io/files/stable/chef-server/12.19.31/el/7/chef-server-core-12.19.31-1.el7.x86_64.rpm
+rpm -ivh chef-server-core-*.rpm
+chef-server-ctl reconfigure
+chef-server-ctl status
+chef-server-ctl user-create root root root root@yeyah.bld Sementara123 -f /etc/chef/root.pem
+chef-server-ctl org-create yeyah "YeyAh, Bld" --association_user root -f /etc/chef/yeyah-validator.pem
+firewall-cmd --permanent --zone public --add-service http
+firewall-cmd --permanent --zone public --add-service https
+firewall-cmd --reload
+
+#chefworkstationdk
+disable selinux
+yum -y update
+yum group install "Development Tools"
+reboot
+vi /etc/hosts -> sesuaikan nama hostname node lain supaya bisa di resolve
+192.168.20.124  chefserver
+192.168.20.125  chefworksstion
+192.168.20.126  chefclient
+yum -y install wget
+wget https://packages.chef.io/files/stable/chef-workstation/0.2.53/el/7/chef-workstation-0.2.53-1.el6.x86_64.rpm
+rpm -ivh rpm -ivh chef-workstation-*.rpm
+chef verify
+git config --global user.email "root@yeyah.bld"
+git config --global user.name "root"
+chef verify
+which ruby
+echo 'eval "$(chef shell-init bash)"' >> ~/.bash_profile
+. ~/.bash_profile
+which ruby
+yum -y install git
+cd ~
+chef generate repo chef-repo
+ls -al ~/chef-repo/
+cd ~/chef-repo/
+git init
+git add .
+git commit -m "initial commit"
+git status
+scp -pr root@chefserver:/etc/chef/root.pem ~/chef-repo/.chef/
+scp -pr root@chefserver:/etc/chef/yeyah-validator.pem ~/chef-repo/.chef/
+vi ~/chef-repo/.chef/knife.rb
+current_dir = File.dirname(__FILE__)
+log_level                :info
+log_location             STDOUT
+node_name                "root"
+client_key               "#{current_dir}/root.pem"
+validation_client_name   "yeyah-validator"
+validation_key           "#{current_dir}/yeyah-validator.pem"
+chef_server_url          "https://chefserver/organizations/yeyah"
+syntax_check_cache_path  "#{ENV['HOME']}/.chef/syntaxcache"
+cookbook_path            ["#{current_dir}/../cookbooks"]
+
+knife client list
+vi ~/chef-repo/.chef/knife.rb
+knife ssl check
+knife ssl fetch
+ssh root@chefserver sudo sha256sum /var/opt/opscode/nginx/ca/chefserver.crt
+gsha256sum .chef/trusted_certs/chefserver.crt
+knife client list
+knife bootstrap chefclient -x root -P Sementara123 --sudo
+
+
+
